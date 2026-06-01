@@ -12,10 +12,24 @@ load_dotenv()
 # AI Provider Credentials
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # AI Model Configuration
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "text-embedding-3-small")
+
+# Determine active provider and apply fallbacks
+AI_PROVIDER = "openai"
+if not OPENAI_API_KEY and GEMINI_API_KEY:
+    AI_PROVIDER = "gemini"
+    # Ensure standard authorization sanity checks pass
+    OPENAI_API_KEY = GEMINI_API_KEY
+    
+    # Pre-configure dynamic fallback defaults for Gemini
+    if MODEL_NAME == "gpt-4o-mini":
+        MODEL_NAME = "gemini-2.5-flash"
+    if EMBEDDING_MODEL_NAME == "text-embedding-3-small":
+        EMBEDDING_MODEL_NAME = "text-embedding-004"
 
 # Custom Chatbot Branding
 CHATBOT_NAME = os.getenv("CHATBOT_NAME", "My AI Assistant")

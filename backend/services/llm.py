@@ -8,6 +8,13 @@ from openai import OpenAI
 from backend.utils import config
 from backend.rag.vector_store import SimpleVectorStore
 
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
+
 
 class LLMService:
     """Orchestrates communication with the LLM API and handles RAG queries.
@@ -115,6 +122,44 @@ class LLMService:
                 "or that the documents do not specify, rather than fabricating details.\n\n"
                 f"=== RETRIEVED CONTEXT ===\n{rag_context}\n=========================="
             )
+            
+        # If active provider is gemini, stream natively using modern google-genai SDK
+        if config.AI_PROVIDER == "gemini":
+            if not genai:
+                err_msg = "google-genai SDK is not installed but AI_PROVIDER is set to gemini."
+                yield f"event: error\ndata: {json.dumps(err_msg)}\n\n"
+                return
+                
+            gemini_contents = []
+            for msg in messages:
+                role = "user" if msg["role"] == "user" else "model"
+                gemini_contents.append(
+                    types.Content(
+                        role=role,
+                        parts=[types.Part.from_text(text=msg["content"])]
+                    )
+                )
+                
+            try:
+                gemini_client = genai.Client(api_key=config.GEMINI_API_KEY)
+                stream = gemini_client.models.generate_content_stream(
+                    model=config.MODEL_NAME,
+                    contents=gemini_contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction
+                    )
+                )
+                
+                for chunk in stream:
+                    delta = chunk.text
+                    if delta:
+                        yield f"event: delta\ndata: {json.dumps(delta)}\n\n"
+                        
+                yield "event: done\ndata: [DONE]\n\n"
+            except Exception as e:
+                err_msg = f"API Error: {str(e)}"
+                yield f"event: error\ndata: {json.dumps(err_msg)}\n\n"
+            return
             
         # Copy and format message list
         formatted_messages = [{"role": "system", "content": system_instruction}]

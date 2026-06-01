@@ -10,6 +10,11 @@ import numpy as np
 from openai import OpenAI
 from backend.utils import config
 
+try:
+    from google import genai
+except ImportError:
+    genai = None
+
 # Reentrant lock to prevent race conditions during concurrent vector read/write events
 _db_lock = threading.RLock()
 
@@ -87,7 +92,7 @@ class SimpleVectorStore:
             self.save()
 
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Queries OpenAI Embeddings API for a list of input texts.
+        """Queries Embeddings API for a list of input texts (OpenAI or Gemini native).
         
         Args:
             texts: List of text blocks to embed.
@@ -97,6 +102,16 @@ class SimpleVectorStore:
         """
         if not texts:
             return []
+            
+        if config.AI_PROVIDER == "gemini":
+            if not genai:
+                raise ValueError("google-genai SDK is not installed but AI_PROVIDER is set to gemini.")
+            client = genai.Client(api_key=config.GEMINI_API_KEY)
+            response = client.models.embed_content(
+                model=config.EMBEDDING_MODEL_NAME,
+                contents=texts
+            )
+            return [item.values for item in response.embeddings]
             
         client = self._get_client()
         response = client.embeddings.create(

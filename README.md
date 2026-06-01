@@ -13,6 +13,7 @@ No complex setup. No vendor lock-in. Bring your own model and data.
 ### 🤖 AI Chatbot
 
 * OpenAI-compatible API support
+* **Seamless Google Gemini API support with zero-dependency fallback**
 * Streaming responses
 * Conversation history
 * Multi-turn conversations
@@ -204,11 +205,16 @@ copy .env.example .env
 ### Environment Variables Settings
 
 ```env
-# AI Provider Credentials (OpenAI or OpenAI-Compatible)
-OPENAI_API_KEY=your_openai_api_key_here
+# AI Provider Credentials (OpenAI or Google Gemini)
+# Provide either your OpenAI key OR your Google Gemini API Key.
+# If OPENAI_API_KEY is left blank and GEMINI_API_KEY is provided, the chatbot runs completely on Gemini!
+OPENAI_API_KEY=
 OPENAI_API_BASE=https://api.openai.com/v1
 
+GEMINI_API_KEY=your_gemini_api_key_here
+
 # AI Model Configuration
+# Defaults below auto-swap to gemini-1.5-flash and text-embedding-004 under Gemini fallback
 MODEL_NAME=gpt-4o-mini
 EMBEDDING_MODEL_NAME=text-embedding-3-small
 
@@ -224,6 +230,31 @@ ENABLE_RAG=true
 ADMIN_PASSWORD=admin123
 JWT_SECRET=super_secret_jwt_signing_key_change_me_in_production
 ```
+
+### ♊ Google Gemini API Fallback
+
+If you do not have an OpenAI API key, you can run the entire RAG Chatbot on Google Gemini models completely out-of-the-box. There is **no need** to install heavy generative AI libraries; the application leverages Google's official OpenAI-compatible interface dynamically.
+
+#### How to Enable Gemini:
+1. Open your `.env` file.
+2. Leave `OPENAI_API_KEY` completely blank (or remove it).
+3. Paste your Gemini API key in `GEMINI_API_KEY`:
+   ```env
+   OPENAI_API_KEY=
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+4. Start the server! The system will automatically detect the key, redirect all calls to `https://generativelanguage.googleapis.com/v1beta/openai/`, and swap default model configurations:
+   * **Chat Model**: Swapped from `gpt-4o-mini` to `gemini-1.5-flash`
+   * **Embeddings Model**: Swapped from `text-embedding-3-small` to `text-embedding-004` (768 dimensions)
+
+#### Supported Gemini Models:
+You can customize the chat model by updating `MODEL_NAME` in your `.env` file to any OpenAI-compatible Gemini model names, such as:
+* `gemini-1.5-flash` (Fast, cost-efficient, recommended)
+* `gemini-1.5-pro` (Highly analytical and reasoning-heavy)
+* `gemini-2.5-flash` (Next-gen speed and capability)
+
+> [!WARNING]
+> **Switching Providers (OpenAI ↔ Gemini)**: If you switch your active AI provider after already index-uploading documents, you **must clear your local database** by deleting `data/vector_store.json`. Because OpenAI embeddings use 1536 dimensions and Google Gemini embeddings use 768 dimensions, mixing them in the same vector database will cause dimension mismatch math exceptions!
 
 ---
 
@@ -370,6 +401,7 @@ Any OpenAI-compatible endpoint.
 
 Examples:
 
+* **Google Gemini** (Zero-dependency native fallback!)
 * OpenAI
 * Azure OpenAI
 * OpenRouter

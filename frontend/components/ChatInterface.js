@@ -71,6 +71,21 @@ export class ChatInterface {
             if (welcomeTitle) welcomeTitle.textContent = this.config.chatbotName;
         }
 
+        // Dynamically update model name label
+        if (this.config.modelName && this.modelNameLabel) {
+            let prettyName = this.config.modelName;
+            if (prettyName === 'gpt-4o-mini') {
+                prettyName = 'GPT-4o Mini';
+            } else if (prettyName === 'gemini-1.5-flash') {
+                prettyName = 'Gemini 1.5 Flash';
+            } else if (prettyName === 'gemini-1.5-pro') {
+                prettyName = 'Gemini 1.5 Pro';
+            } else if (prettyName === 'gemini-2.5-flash') {
+                prettyName = 'Gemini 2.5 Flash';
+            }
+            this.modelNameLabel.textContent = prettyName;
+        }
+
         // Set RAG toggle capability based on system config
         if (this.ragToggle && this.config.isRagEnabled === false) {
             this.ragToggle.checked = false;
