@@ -6,9 +6,6 @@ Build and deploy a production-ready AI chatbot in minutes.
 
 No complex setup. No vendor lock-in. Bring your own model and data.
 
-<img width="800" height="449" alt="ezgif-67fd456ce93ece28" src="https://github.com/user-attachments/assets/b74039a7-0777-45a9-ba19-16522f7d5a21" />
-
-
 ---
 
 ## ✨ Features
@@ -517,3 +514,5 @@ Deep Patel
 AI Engineer | Python Developer | Generative AI Enthusiast
 
 If this project helped you, consider giving it a ⭐ on GitHub.
+
+<img width="800" height="449" alt="ezgif-67fd456ce93ece28" src="https://github.com/user-attachments/assets/b74039a7-0777-45a9-ba19-16522f7d5a21" />
