@@ -18,15 +18,16 @@ No complex setup. No vendor lock-in. Bring your own model and data.
 * Multi-turn conversations
 * Markdown rendering
 * Code syntax highlighting
+* **Export chat history to Markdown (.md) with one click**
 
 ### 📚 RAG (Retrieval-Augmented Generation)
 
-* Upload PDF documents
-* Upload TXT files
-* Upload Markdown files
+* **Bulk drag-and-drop multi-file uploads**
+* Upload PDF documents, TXT files, and Markdown files
+* **Real-time background chunking and indexing**
 * Knowledge base search
 * Context-aware responses
-* Source citations
+* Source citations with similarity relevance indicators
 
 ### 🎨 Branding & Customization
 
@@ -43,6 +44,7 @@ No complex setup. No vendor lock-in. Bring your own model and data.
 * Environment variable support
 * User authentication support
 * Session management
+* **Thread-safe database RLock protection for concurrent traffic**
 
 ### 🚀 Deployment Ready
 
