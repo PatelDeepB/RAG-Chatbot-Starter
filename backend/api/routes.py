@@ -120,7 +120,7 @@ class LoginRequest(BaseModel):
 # --- Background Task ---
 
 def background_reindex_store():
-    """Performs full corpus ingestion and indexing in the background with atomic safe overrides.
+    """Performs full corpus ingestion and indexing in the background with atomic file-by-file diagnostics.
     """
     import json
     print("⏳ Background Task: Reindexing vector store...")
@@ -156,38 +156,58 @@ def background_reindex_store():
         pass
 
     try:
-        # Load and parse all documents
-        all_docs = []
+        # Check if API Key is configured before starting
+        if not config.OPENAI_API_KEY:
+            raise ValueError("Invalid API Key in .env")
+
+        store = SimpleVectorStore()
+        new_chunks = []
+        file_statuses = {}
+        
+        # Load and parse documents file-by-file
         for file_name in files:
             file_path = os.path.join(docs_dir, file_name)
-            docs = load_document(file_path)
-            if docs:
-                all_docs.extend(docs)
+            try:
+                docs = load_document(file_path)
+                if not docs:
+                    # Provide precise feedback if the file has no selectable text (specifically scanned PDFs)
+                    _, ext = os.path.splitext(file_name.lower())
+                    if ext == ".pdf":
+                        file_statuses[file_name] = "failed: Scanned PDF (no selectable text found)"
+                    else:
+                        file_statuses[file_name] = "failed: Empty or unreadable text content"
+                    continue
+                    
+                chunks = split_documents(docs, chunk_size=800, chunk_overlap=150)
+                if not chunks:
+                    file_statuses[file_name] = "failed: No text blocks generated during chunk splitting"
+                    continue
+                    
+                new_chunks.extend(chunks)
+                # Temporarily flag as indexing until embeddings generate successfully
+                file_statuses[file_name] = "indexing"
+            except Exception as file_err:
+                file_statuses[file_name] = f"failed: {str(file_err)}"
                 
-        # If no documents are present, simply clear the active store
+        # If no documents exist in folder, simply clear the active store
         if not files:
-            store = SimpleVectorStore()
             store.clear()
-            # Clear status file
             with open(status_path, "w", encoding="utf-8") as f:
                 json.dump({}, f, indent=2)
             print("📁 Background Task: No documents found. Vector index cleared.")
             return
 
-        if all_docs:
-            chunks = split_documents(all_docs, chunk_size=800, chunk_overlap=150)
-            
+        if new_chunks:
             # Temporary store to perform embedding generation (throws error if API key is invalid)
             temp_store = SimpleVectorStore()
-            texts = [c["text"] for c in chunks]
+            texts = [c["text"] for c in new_chunks]
             embeddings = temp_store.get_embeddings(texts)
             
-            # Since embedding generation succeeded, we can now safely clear and replace active on-disk store!
-            store = SimpleVectorStore()
+            # Since embedding generation succeeded, safely overwrite active on-disk store!
             store.chunks = []
             store.embeddings = []
             
-            for chunk, emb in zip(chunks, embeddings):
+            for chunk, emb in zip(new_chunks, embeddings):
                 store.chunks.append({
                     "text": chunk["text"],
                     "metadata": chunk["metadata"]
@@ -196,18 +216,21 @@ def background_reindex_store():
                 
             store.save()
             
-            # Update all files to "indexed"
-            new_status = {f: "indexed" for f in files}
-            with open(status_path, "w", encoding="utf-8") as f:
-                json.dump(new_status, f, indent=2)
-                
-            print(f"✅ Background Task: Successfully indexed {len(chunks)} chunks.")
+            # Update successfully indexed files to "indexed"
+            for f in files:
+                if file_statuses.get(f) == "indexing":
+                    file_statuses[f] = "indexed"
         else:
-            # Files were empty or unreadable
-            new_status = {f: "failed: No readable text found" for f in files}
-            with open(status_path, "w", encoding="utf-8") as f:
-                json.dump(new_status, f, indent=2)
-                
+            # If no chunks were compiled from any file, clear on-disk store
+            store.chunks = []
+            store.embeddings = []
+            store.save()
+            
+        with open(status_path, "w", encoding="utf-8") as f:
+            json.dump(file_statuses, f, indent=2)
+            
+        print("🎉 Background Task: Ingestion check completed.")
+        
     except Exception as e:
         err_msg = str(e)
         if "invalid_api_key" in err_msg.lower():
@@ -217,10 +240,10 @@ def background_reindex_store():
         else:
             err_msg = f"failed: {err_msg}"
             
-        print(f"❌ Background Task: Reindexing failed: {err_msg}")
+        print(f"❌ Background Task: Global reindexing error: {err_msg}")
         
-        # Write failures to status JSON
-        new_status = {}
+        # Mark non-indexed files as failed with global error
+        final_statuses = {}
         try:
             store = SimpleVectorStore()
             indexed_sources = {chunk["metadata"].get("source") for chunk in store.chunks}
@@ -230,13 +253,13 @@ def background_reindex_store():
         for f in files:
             # If it was already indexed in a prior run, preserve its indexed status
             if f in indexed_sources:
-                new_status[f] = "indexed"
+                final_statuses[f] = "indexed"
             else:
-                new_status[f] = err_msg
+                final_statuses[f] = err_msg
                 
         try:
             with open(status_path, "w", encoding="utf-8") as f:
-                json.dump(new_status, f, indent=2)
+                json.dump(final_statuses, f, indent=2)
         except Exception:
             pass
 
