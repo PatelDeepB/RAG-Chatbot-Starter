@@ -142,3 +142,30 @@ def test_vector_store_add_and_search(mock_openai_class):
         # Clean up temporary database
         if os.path.exists(db_path):
             os.remove(db_path)
+
+
+# --- 4. Gemini Configuration Tests ---
+
+def test_gemini_config_fallback():
+    """Verifies config behavior when only GEMINI_API_KEY is supplied.
+    """
+    import importlib
+    from backend.utils import config
+    
+    with patch.dict(os.environ, {
+        "OPENAI_API_KEY": "",
+        "GEMINI_API_KEY": "dummy_gemini_key",
+        "MODEL_NAME": "gpt-4o-mini",
+        "EMBEDDING_MODEL_NAME": "text-embedding-3-small"
+    }):
+        # Force reload to apply env overrides
+        importlib.reload(config)
+        
+        assert config.OPENAI_API_KEY == "dummy_gemini_key"
+        assert config.OPENAI_API_BASE == "https://generativelanguage.googleapis.com/v1beta/openai/"
+        assert config.MODEL_NAME == "gemini-1.5-flash"
+        assert config.EMBEDDING_MODEL_NAME == "text-embedding-004"
+
+    # Reload again with original settings to clean up config state for subsequent tests
+    importlib.reload(config)
+
