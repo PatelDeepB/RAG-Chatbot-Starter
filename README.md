@@ -193,63 +193,89 @@ pip install -r requirements.txt
 
 # 🔑 Configuration
 
-Create a `.env` file.
+Create a `.env` file from the example:
+
+```bash
+copy .env.example .env
+```
+
+### Environment Variables Settings
 
 ```env
-OPENAI_API_KEY=your_api_key
+# AI Provider Credentials (OpenAI or OpenAI-Compatible)
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_API_BASE=https://api.openai.com/v1
 
+# AI Model Configuration
 MODEL_NAME=gpt-4o-mini
+EMBEDDING_MODEL_NAME=text-embedding-3-small
 
-CHATBOT_NAME=My AI Assistant
-
+# Custom Chatbot Branding
+CHATBOT_NAME="My AI Assistant"
 PRIMARY_COLOR=#2563eb
+WELCOME_MESSAGE="Hello! I am your AI assistant, trained on your custom knowledge base. How can I help you today?"
 
+# RAG Toggle
 ENABLE_RAG=true
+
+# Security (Admin password for dynamic file manager console)
+ADMIN_PASSWORD=admin123
+JWT_SECRET=super_secret_jwt_signing_key_change_me_in_production
 ```
 
 ---
 
 # 🚀 Run Locally
 
+Ensure you have your virtual environment activated:
+
+```bash
+# Windows
+.\venv\Scripts\activate
+
+# Linux / macOS
+source venv/bin/activate
+```
+
+Start the application server:
+
 ```bash
 python app.py
 ```
 
-or
-
-```bash
-uvicorn app:app --reload
-```
-
-Open:
+Open your browser and navigate to:
 
 ```text
 http://localhost:8000
 ```
 
+*   **Frontend UI + API Router**: Served at `http://localhost:8000/`
+*   **Interactive API Docs**: View dynamic Swagger documentation at `http://localhost:8000/docs`
+
 ---
 
 # 📚 Adding Knowledge Base Documents
 
-Place files inside:
+**RAG-Chatbot-Starter** features an integrated, real-time administrative document manager. 
 
-```text
-data/documents/
-```
+### 1. Uploading via Sidebar UI (Recommended)
+1. In your browser at `http://localhost:8000`, click **Unlock Admin** in the bottom-left sidebar.
+2. Enter your `ADMIN_PASSWORD` (default: `admin123`).
+3. Drag-and-drop or select any PDF, TXT, or Markdown files.
+4. The server will automatically chunk, generate embeddings, and index the file **in the background instantly**!
+5. In case of API connection or key errors, the UI will report the failure details immediately.
 
-Supported formats:
-
-* PDF
-* TXT
-* Markdown
-
-After uploading documents:
-
-```bash
-python ingest.py
-```
-
-This creates vector embeddings and indexes your knowledge base.
+### 2. Manual Uploading via Ingestion CLI
+If you prefer managing documents manually:
+1. Place your files inside the documents folder:
+   ```text
+   data/documents/
+   ```
+   Supported formats: PDF, TXT, Markdown.
+2. Run the ingestion script to manually index them:
+   ```bash
+   python ingest.py
+   ```
 
 ---
 
@@ -257,25 +283,29 @@ This creates vector embeddings and indexes your knowledge base.
 
 ## Change Logo
 
-Replace:
+Replace the logo file with your custom brand icon:
 
 ```text
 frontend/assets/logo.png
 ```
 
+*Note: If no custom logo is supplied, the chatbot displays a neat dynamic SVG letter icon placeholder automatically.*
+
 ---
 
 ## Change Chatbot Name
 
-Update:
+Update the branding name displayed on the header, welcome panel, and tabs:
 
 ```env
-CHATBOT_NAME=My Company Assistant
+CHATBOT_NAME="My Company Assistant"
 ```
 
 ---
 
 ## Change Theme Color
+
+Update the primary colors used across sliders, floating message bubbles, and action buttons. The frontend will dynamically extract HEX codes and override styling instantly:
 
 ```env
 PRIMARY_COLOR=#0ea5e9
@@ -285,8 +315,10 @@ PRIMARY_COLOR=#0ea5e9
 
 ## Change Welcome Message
 
+Update the greeting message displayed to users on clean chat session openings:
+
 ```env
-WELCOME_MESSAGE=Hello! How can I help you today?
+WELCOME_MESSAGE="Welcome to our Support Portal! Ask me anything."
 ```
 
 ---
