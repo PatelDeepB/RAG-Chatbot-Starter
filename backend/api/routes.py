@@ -372,40 +372,47 @@ def list_documents(admin_role: str = Depends(get_current_admin)):
 @router.post("/documents/upload")
 async def upload_document(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     admin_role: str = Depends(get_current_admin)
 ):
-    """Uploads file to store directory and schedules background re-indexing.
+    """Uploads multiple files to store directory and schedules background re-indexing.
     """
-    _, ext = os.path.splitext(file.filename.lower())
-    if ext not in (".pdf", ".txt", ".md", ".markdown"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported file format. Only PDF, TXT, and Markdown are accepted."
-        )
-        
+    uploaded_names = []
     docs_dir = os.path.join("data", "documents")
     os.makedirs(docs_dir, exist_ok=True)
     
-    safe_filename = os.path.basename(file.filename)
-    target_path = os.path.join(docs_dir, safe_filename)
-    
-    try:
-        with open(target_path, "wb") as buffer:
-            contents = await file.read()
-            buffer.write(contents)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to write file to disk: {e}"
-        )
+    # Pre-validate all uploaded formats
+    for file in files:
+        _, ext = os.path.splitext(file.filename.lower())
+        if ext not in (".pdf", ".txt", ".md", ".markdown"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unsupported format for '{file.filename}'. Only PDF, TXT, and Markdown are accepted."
+            )
+            
+    # Write files to directory
+    for file in files:
+        safe_filename = os.path.basename(file.filename)
+        target_path = os.path.join(docs_dir, safe_filename)
         
-    # Trigger background vector rebuild
+        try:
+            with open(target_path, "wb") as buffer:
+                contents = await file.read()
+                buffer.write(contents)
+            uploaded_names.append(safe_filename)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to write file '{safe_filename}' to disk: {e}"
+            )
+            
+    # Trigger single background vector rebuild for the newly updated list
     background_tasks.add_task(background_reindex_store)
     
     return {
         "status": "success",
-        "message": f"File '{safe_filename}' uploaded. Background reindexing scheduled."
+        "message": f"Successfully uploaded {len(uploaded_names)} file(s). Background reindexing scheduled.",
+        "files": uploaded_names
     }
 
 

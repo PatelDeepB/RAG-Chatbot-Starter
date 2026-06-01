@@ -36,6 +36,8 @@ app.include_router(api_router, prefix="/api")
 @app.on_event("startup")
 def startup_checks():
     """Validates that necessary runtime directories exist on start.
+    
+    Performs database recovery by clearing any stuck "indexing" statuses.
     """
     os.makedirs(os.path.join("data", "documents"), exist_ok=True)
     os.makedirs(os.path.join("frontend", "assets"), exist_ok=True)
@@ -43,6 +45,27 @@ def startup_checks():
     os.makedirs(os.path.join("frontend", "styles"), exist_ok=True)
     os.makedirs(os.path.join("frontend", "pages"), exist_ok=True)
     print("📁 Runtime storage directories successfully verified.")
+    
+    # Recovery check: clean up stuck "indexing" states on boot
+    import json
+    status_path = os.path.join("data", "documents_status.json")
+    if os.path.exists(status_path):
+        try:
+            with open(status_path, "r", encoding="utf-8") as f:
+                status_data = json.load(f)
+            
+            modified = False
+            for doc, stat in status_data.items():
+                if stat == "indexing":
+                    status_data[doc] = "failed: Ingestion interrupted on server restart"
+                    modified = True
+                    
+            if modified:
+                with open(status_path, "w", encoding="utf-8") as f:
+                    json.dump(status_data, f, indent=2)
+                print("🧹 Cleaned up lingering 'indexing' statuses from previous session.")
+        except Exception as e:
+            print(f"Warning: Startup recovery status check failed: {e}")
 
 
 # Mount Frontend assets to serve them cleanly with absolute URLs
