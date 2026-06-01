@@ -6,7 +6,7 @@ and handles server startup sanity checks.
 
 import os
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -100,13 +100,16 @@ def read_all_other_paths(full_path: str):
     """
     # Ignore API routes and direct static file requests
     if full_path.startswith("api") or "." in full_path:
-        return FileResponse(os.path.join("frontend", full_path))
+        file_path = os.path.join("frontend", full_path)
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+        raise HTTPException(status_code=404, detail="File Not Found")
         
     index_path = os.path.join("frontend", "pages", "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
         
-    return {"error": "Not Found"}
+    raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":

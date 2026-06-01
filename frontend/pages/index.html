@@ -1,34 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Knowledge Assistant</title>
-    
+    <title>RAG-Chatbot-Starter | Production AI Assistant Showcase</title>
+
+    <!-- SEO and Showcase Metadata (Rule 16: SEO Best Practices) -->
+    <meta name="description"
+        content="A state-of-the-art open-source RAG chatbot starter kit. Connect OpenAI or Google Gemini, customize branding, drop documents, and query instantly.">
+    <meta name="keywords"
+        content="RAG, AI Chatbot, Gemini Fallback, OpenAI, Vector Search, Document Indexing, Open Source Showcase">
+    <meta property="og:title" content="RAG-Chatbot-Starter | AI Knowledge Assistant">
+    <meta property="og:description"
+        content="Connect OpenAI or Gemini, upload PDFs, and query with real-time background vector indexing.">
+    <meta property="og:type" content="website">
+
     <!-- Design Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- Code Highlight and Markdown parser libraries via CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-    
+
     <!-- Lucide Icons via CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
+    <script src="https://unpkg.com/lucide@0.460.0"></script>
+
     <!-- Core Brand Theme Stylesheet -->
     <link rel="stylesheet" href="/styles/main.css">
 </head>
+
 <body class="dark-mode">
+    <!-- Change Tracker (Rule 6):
+         - Added SEO metadata in head.
+         - Embedded .bg-glow-1 and .bg-glow-2 ambient pulsing background layers.
+         - Created drag-and-drop backdrop panel (#drag-drop-overlay).
+         - Refactored Welcome greeting container with gradient welcome-title.
+         - Replaced centering popup citation modal with a right-sliding sidebar drawer system (#citation-drawer).
+         - Configured accessible keyboard indexing and semantic structures throughout.
+    -->
+
+    <!-- Ambient Glowing Spheres for Rich Showcase Backdrop -->
+    <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+
+    <!-- Drag & Drop Full Console Overlay -->
+    <div class="dropzone-overlay" id="drag-drop-overlay" aria-hidden="true" style="display:none">
+        <i data-lucide="upload-cloud" style="width: 64px; height: 64px; color: var(--primary-color);"></i>
+        <span class="dropzone-overlay-text">Drag & drop files to index instantly</span>
+    </div>
+
     <div class="app-container">
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar Navigation (Rule 16: Semantic HTML aside) -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="brand-logo" id="brand-logo-container">
                     <div class="logo-placeholder" id="logo-graphic">AI</div>
-                    <img id="logo-img" src="/assets/logo.png" alt="Logo" class="hidden">
+                    <img id="logo-img" src="/assets/logo.png" alt="Custom Brand Logo" class="logo-img hidden">
                 </div>
                 <div class="brand-info">
                     <h2 class="brand-name" id="brand-name">AI Assistant</h2>
@@ -38,15 +72,16 @@
                     <i data-lucide="x"></i>
                 </button>
             </div>
-            
+
             <div class="sidebar-body">
                 <!-- Section: Chat Sessions -->
                 <div class="sidebar-section">
-                    <button class="btn btn-primary btn-new-chat" id="btn-new-chat">
+                    <button class="btn btn-primary btn-new-chat" id="btn-new-chat"
+                        aria-label="Start a new chat conversation">
                         <i data-lucide="plus"></i>
                         <span>New Chat</span>
                     </button>
-                    
+
                     <div class="history-list-header">
                         <span>Recent Conversations</span>
                     </div>
@@ -54,29 +89,32 @@
                         <!-- Dynamically filled history -->
                     </div>
                 </div>
-                
+
                 <!-- Section: Document Knowledge Base (Admin Protected) -->
                 <div class="sidebar-section kb-section">
                     <div class="section-title">
                         <span>Knowledge Base</span>
-                        <button class="btn-icon" id="admin-auth-trigger" title="Unlock Admin Actions">
+                        <button class="btn-icon" id="admin-auth-trigger" title="Lock/Unlock Admin Mode"
+                            aria-label="Toggle admin settings panel">
                             <i data-lucide="lock" id="admin-lock-icon"></i>
                         </button>
                     </div>
-                    
+
                     <!-- Admin Locked Panel -->
                     <div class="admin-locked-panel" id="admin-locked-panel">
-                        <p class="admin-hint-text">Unlock document uploads & index management.</p>
-                        <button class="btn btn-secondary btn-sm" id="btn-unlock-admin">
+                        <p class="admin-hint-text">Unlock document uploads & background indexing.</p>
+                        <button class="btn btn-secondary btn-sm" id="btn-unlock-admin"
+                            aria-label="Unlock administrator knowledge base settings">
                             <i data-lucide="unlock"></i>
                             <span>Unlock Admin</span>
                         </button>
                     </div>
-                    
+
                     <!-- Admin Active Panel -->
                     <div class="admin-active-panel hidden" id="admin-active-panel">
                         <!-- Document Upload Area -->
-                        <div class="upload-dropzone" id="upload-dropzone">
+                        <div class="upload-dropzone" id="upload-dropzone" tabindex="0" role="button"
+                            aria-label="Drag and drop or browse documents to upload">
                             <i data-lucide="upload-cloud" class="upload-icon"></i>
                             <p class="upload-text">Drag & drop or <span class="browse-link">browse</span></p>
                             <span class="upload-subtext">PDF, TXT, MD (max 10MB)</span>
@@ -88,7 +126,7 @@
                             </div>
                             <span class="progress-label" id="progress-label">Uploading...</span>
                         </div>
-                        
+
                         <!-- File Manager List -->
                         <div class="kb-file-list" id="kb-file-list">
                             <!-- Populated dynamically -->
@@ -96,25 +134,25 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="sidebar-footer">
-                <button class="btn-sidebar-option" id="theme-toggle">
+                <button class="btn-sidebar-option" id="theme-toggle" aria-label="Toggle light or dark theme mode">
                     <i data-lucide="sun" class="sun-icon"></i>
                     <i data-lucide="moon" class="moon-icon"></i>
                     <span id="theme-text">Light Mode</span>
                 </button>
                 <div class="footer-credit">
-                    <span>Powered by DeepMind Antigravity</span>
+                    <span>Powered by https://github.com/PatelDeepB</span>
                 </div>
             </div>
         </aside>
-        
-        <!-- Main Console Layout -->
+
+        <!-- Main Console Layout (Rule 16: Semantic HTML main) -->
         <main class="chat-console">
             <!-- Console Header -->
             <header class="console-header">
                 <div class="header-left">
-                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Open sidebar">
+                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Open sidebar menu">
                         <i data-lucide="menu"></i>
                     </button>
                     <div class="model-badge">
@@ -122,64 +160,68 @@
                         <span id="model-name-label">GPT-4o Mini</span>
                     </div>
                 </div>
-                
+
                 <div class="header-right">
                     <!-- Export Chat Button -->
-                    <button class="btn btn-secondary btn-sm" id="btn-export-chat" title="Export conversation to Markdown" disabled>
+                    <button class="btn btn-secondary btn-sm" id="btn-export-chat"
+                        title="Export conversation to Markdown file" disabled
+                        aria-label="Export conversation history to markdown">
                         <i data-lucide="download" style="width: 14px; height: 14px; margin-right: 4px;"></i>
                         <span>Export Chat</span>
                     </button>
-                    
+
                     <!-- RAG toggle switch -->
                     <div class="toggle-container">
                         <span class="toggle-label">Search Docs</span>
-                        <label class="switch">
+                        <label class="switch" for="rag-toggle">
                             <input type="checkbox" id="rag-toggle" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
                 </div>
             </header>
-            
+
             <!-- Chat Output Scroll Area -->
             <div class="chat-output-area" id="chat-output-area">
                 <!-- Welcome greeting container -->
                 <div class="welcome-container" id="welcome-container">
-                    <div class="welcome-graphic">💬</div>
+                    <div class="welcome-logo-container">
+                        <div class="welcome-graphic" id="welcome-graphic-placeholder">💬</div>
+                        <img id="welcome-logo-img" src="/assets/logo.png" alt="Showcase Brand Icon"
+                            class="welcome-logo hidden">
+                    </div>
                     <h1 class="welcome-title" id="welcome-title">My AI Assistant</h1>
-                    <p class="welcome-subtitle" id="welcome-subtitle">Ask me anything! Upload documentation in the sidebar to enrich my knowledge.</p>
-                    
+                    <p class="welcome-subtitle" id="welcome-subtitle">Ask me anything! Upload documentation in the
+                        sidebar to enrich my knowledge.</p>
+
                     <div class="suggested-queries">
-                        <button class="suggested-card" data-query="What kind of document formats are supported?">
+                        <button class="suggested-card" data-query="What kind of document formats are supported?"
+                            aria-label="Query suggestion: What document formats are supported?">
                             <span class="query-text">What document formats are supported?</span>
                             <i data-lucide="arrow-right" class="card-arrow"></i>
                         </button>
-                        <button class="suggested-card" data-query="How does Retrieval-Augmented Generation (RAG) work?">
+                        <button class="suggested-card" data-query="How does Retrieval-Augmented Generation (RAG) work?"
+                            aria-label="Query suggestion: How does RAG work?">
                             <span class="query-text">How does RAG work?</span>
                             <i data-lucide="arrow-right" class="card-arrow"></i>
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="message-stream-list" id="message-stream-list">
                     <!-- Messages will render here dynamically -->
                 </div>
             </div>
-            
-            <!-- Floating Chat Input Console -->
+
+            <!-- Floating Chat Input Console (Rule 16: Semantic HTML footer) -->
             <footer class="chat-input-container">
                 <form class="chat-input-form" id="chat-input-form">
-                    <textarea 
-                        class="chat-input-textarea" 
-                        id="chat-input-textarea" 
-                        placeholder="Ask a question..." 
-                        rows="1"
-                        maxlength="4000"
-                        required
-                    ></textarea>
+                    <textarea class="chat-input-textarea" id="chat-input-textarea" placeholder="Ask a question..."
+                        rows="1" maxlength="4000" required aria-label="Ask your AI assistant a question"></textarea>
                     <div class="chat-controls">
                         <span class="character-counter" id="char-counter">0/4000</span>
-                        <button type="submit" class="btn-send" id="btn-send" disabled aria-label="Send message">
+                        <button type="submit" class="btn-send" id="btn-send" disabled
+                            aria-label="Send message to AI assistant">
                             <i data-lucide="send"></i>
                         </button>
                     </div>
@@ -189,79 +231,99 @@
                 </div>
             </footer>
         </main>
-        
+
         <!-- Auth Administration Overlay Dialog -->
         <div class="modal-overlay hidden" id="auth-modal">
             <div class="modal-card">
                 <div class="modal-header">
                     <h3>Unlock Knowledge Base Admin</h3>
-                    <button class="btn-icon modal-close" id="auth-modal-close">
+                    <button class="btn-icon modal-close" id="auth-modal-close" aria-label="Close authentication window">
                         <i data-lucide="x"></i>
                     </button>
                 </div>
                 <form id="auth-form" class="modal-body">
-                    <p class="modal-desc">Enter the administrative password from your configuration to manage documents.</p>
+                    <p class="modal-desc">Enter the administrative password from your configuration to manage documents.
+                    </p>
                     <div class="form-group">
                         <label for="admin-password">Admin Password</label>
-                        <input type="password" id="admin-password" placeholder="••••••••" required autofocus>
+                        <input type="password" id="admin-password" placeholder="••••••••" required autofocus
+                            autocomplete="current-password">
                         <span class="error-text hidden" id="auth-error-msg">Incorrect password. Please try again.</span>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100" id="btn-submit-auth">
+                    <button type="submit" class="btn btn-primary w-100" id="btn-submit-auth"
+                        aria-label="Submit administrative password">
                         <i data-lucide="unlock"></i>
                         <span>Unlock Console</span>
                     </button>
                 </form>
             </div>
         </div>
-        
-        <!-- Citation Source Content View Drawer -->
-        <div class="modal-overlay hidden" id="citation-modal">
-            <div class="modal-card citation-card">
-                <div class="modal-header">
-                    <div>
-                        <h3 id="citation-title">Source Citation</h3>
-                        <span id="citation-relevance" class="relevance-badge">Relevance: 98%</span>
-                    </div>
-                    <button class="btn-icon modal-close" id="citation-modal-close">
-                        <i data-lucide="x"></i>
-                    </button>
+
+        <!-- Interactive Slide-Out Citations Side-Drawer (Showcase Redesign) -->
+        <div class="citation-drawer-overlay" id="citation-drawer-overlay"></div>
+        <aside class="citation-drawer" id="citation-modal">
+            <div class="citation-drawer-header">
+                <div class="citation-drawer-header-info">
+                    <h3 id="citation-title">Source Citation</h3>
+                    <span id="citation-relevance" class="relevance-badge relevance-high">Relevance: 98%</span>
                 </div>
-                <div class="modal-body citation-body">
+                <button class="btn-icon modal-close" id="citation-modal-close" aria-label="Close citations side-panel">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="citation-drawer-body">
+                <div class="citation-chunk-container">
                     <pre class="citation-source-text" id="citation-source-text"></pre>
                 </div>
             </div>
-        </div>
+        </aside>
     </div>
-    
+
     <!-- ES6 Component Modules -->
     <script type="module">
         import { ThemeManager } from '/components/ThemeManager.js';
         import { Sidebar } from '/components/Sidebar.js';
         import { ChatInterface } from '/components/ChatInterface.js';
-        
+
+        // Prevent browser from restoring stale scroll positions on reload
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
         // Initialize Core Front-End Architecture
         document.addEventListener('DOMContentLoaded', async () => {
+            // Reset scroll positions to prevent stale scroll state from reload
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+
+            // Re-enable the dropzone overlay (hidden via inline style to prevent FOUC)
+            const dragDropOverlay = document.getElementById('drag-drop-overlay');
+            if (dragDropOverlay) {
+                dragDropOverlay.style.removeProperty('display');
+            }
+
             const configResponse = await fetch('/api/config');
             const config = await configResponse.json();
-            
+
             // 1. Initialize Theme manager
             const themeManager = new ThemeManager(config);
             themeManager.init();
-            
+
             // 2. Initialize Sidebar management (auth, files, history)
             const sidebar = new Sidebar(config);
             sidebar.init();
-            
+
             // 3. Initialize Interactive Chat Interface
             const chatInterface = new ChatInterface(config, sidebar);
             chatInterface.init();
-            
+
             // Initialize Lucide Icons for dynamic tags
             lucide.createIcons();
-            
+
             // Expose components on window for debugging/submodules if necessary
             window.app = { themeManager, sidebar, chatInterface };
         });
     </script>
 </body>
+
 </html>
