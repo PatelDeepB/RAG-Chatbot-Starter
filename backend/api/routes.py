@@ -274,7 +274,8 @@ def get_branding_config():
         "primaryColor": config.PRIMARY_COLOR,
         "welcomeMessage": config.WELCOME_MESSAGE,
         "isRagEnabled": config.is_rag_enabled,
-        "hasApiKey": bool(config.OPENAI_API_KEY)
+        "hasApiKey": bool(config.OPENAI_API_KEY),
+        "modelName": config.MODEL_NAME
     }
 
 
