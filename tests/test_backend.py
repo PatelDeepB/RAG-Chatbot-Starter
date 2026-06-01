@@ -104,6 +104,7 @@ def test_vector_store_add_and_search(mock_openai_class):
 
     # Force mock API key so validation passes
     config.OPENAI_API_KEY = "mock_key_for_testing"
+    config.AI_PROVIDER = "openai"
 
     # Initialize store with temporary DB path
     db_path = "data/test_vector_store.json"
@@ -161,9 +162,9 @@ def test_gemini_config_fallback():
         # Force reload to apply env overrides
         importlib.reload(config)
         
+        assert config.AI_PROVIDER == "gemini"
         assert config.OPENAI_API_KEY == "dummy_gemini_key"
-        assert config.OPENAI_API_BASE == "https://generativelanguage.googleapis.com/v1beta/openai/"
-        assert config.MODEL_NAME == "gemini-1.5-flash"
+        assert config.MODEL_NAME == "gemini-2.5-flash"
         assert config.EMBEDDING_MODEL_NAME == "text-embedding-004"
 
     # Reload again with original settings to clean up config state for subsequent tests
