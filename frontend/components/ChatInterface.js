@@ -92,6 +92,36 @@ export class ChatInterface {
             this.ragToggle.disabled = true;
             this.ragToggle.closest('.toggle-container').style.opacity = '0.5';
         }
+
+        // Handle dynamic sidebar logo swapping
+        const logoImg = document.getElementById('logo-img');
+        const logoGraphic = document.getElementById('logo-graphic');
+        if (logoImg && logoGraphic) {
+            if (logoImg.complete && logoImg.naturalHeight !== 0) {
+                logoImg.classList.remove('hidden');
+                logoGraphic.classList.add('hidden');
+            } else {
+                logoImg.addEventListener('load', () => {
+                    logoImg.classList.remove('hidden');
+                    logoGraphic.classList.add('hidden');
+                });
+            }
+        }
+
+        // Handle dynamic welcome panel logo swapping
+        const welcomeLogoImg = document.getElementById('welcome-logo-img');
+        const welcomePlaceholder = document.getElementById('welcome-graphic-placeholder');
+        if (welcomeLogoImg && welcomePlaceholder) {
+            if (welcomeLogoImg.complete && welcomeLogoImg.naturalHeight !== 0) {
+                welcomeLogoImg.classList.remove('hidden');
+                welcomePlaceholder.classList.add('hidden');
+            } else {
+                welcomeLogoImg.addEventListener('load', () => {
+                    welcomeLogoImg.classList.remove('hidden');
+                    welcomePlaceholder.classList.add('hidden');
+                });
+            }
+        }
     }
 
     bindEvents() {

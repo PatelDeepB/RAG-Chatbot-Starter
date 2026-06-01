@@ -1312,3 +1312,12 @@ input:checked + .slider:before {
         font-size: 40px;
     }
 }
+
+.welcome-logo {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    animation: float 4s ease-in-out infinite;
+    border-radius: 12px;
+}
