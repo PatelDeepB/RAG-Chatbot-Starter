@@ -23,6 +23,7 @@ export class ChatInterface {
         
         this.ragToggle = document.getElementById('rag-toggle');
         this.modelNameLabel = document.getElementById('model-name-label');
+        this.btnExportChat = document.getElementById('btn-export-chat');
         
         // Citation Drawer Dom
         this.citationModal = document.getElementById('citation-modal');
@@ -128,6 +129,13 @@ export class ChatInterface {
                 this.citationModal.classList.add('hidden');
             }
         });
+
+        // Export active chat session click
+        if (this.btnExportChat) {
+            this.btnExportChat.addEventListener('click', () => {
+                this.exportActiveChatToMarkdown();
+            });
+        }
     }
 
     setupTextareaAutoResize() {
@@ -161,11 +169,21 @@ export class ChatInterface {
             // Display greeting screen
             this.messages = [];
             this.welcomeContainer.classList.remove('hidden');
+            if (this.btnExportChat) this.btnExportChat.setAttribute('disabled', 'true');
             return;
         }
 
         this.welcomeContainer.classList.add('hidden');
         this.messages = chat.messages || [];
+        
+        // Enable/Disable export button based on whether messages are present
+        if (this.btnExportChat) {
+            if (this.messages.length > 0) {
+                this.btnExportChat.removeAttribute('disabled');
+            } else {
+                this.btnExportChat.setAttribute('disabled', 'true');
+            }
+        }
         
         this.messages.forEach(msg => {
             this.appendMessageBubble(msg.role, msg.content, msg.sources);
@@ -195,6 +213,12 @@ export class ChatInterface {
         // 1. Add User Message to local state & render UI
         const userMsg = { role: 'user', content: query };
         this.messages.push(userMsg);
+        
+        // Enable export button once the user initiates a conversation
+        if (this.btnExportChat) {
+            this.btnExportChat.removeAttribute('disabled');
+        }
+        
         this.appendMessageBubble('user', query);
         this.sidebar.updateActiveChatHistory(this.messages);
         this.scrollToBottom();
@@ -440,5 +464,60 @@ export class ChatInterface {
             top: this.chatOutputArea.scrollHeight,
             behavior: 'smooth'
         });
+    }
+
+    /**
+     * Compiles conversation history into Markdown and triggers a local file download.
+     */
+    exportActiveChatToMarkdown() {
+        if (!this.messages || this.messages.length === 0) return;
+        
+        const chatTitle = this.sidebar.history.find(c => c.id === this.sidebar.activeChatId)?.title || "Conversation";
+        const dateStr = new Date().toLocaleDateString();
+        
+        let markdown = `# AI Chat Export - ${chatTitle}\n`;
+        markdown += `*Date: ${dateStr}*\n\n`;
+        markdown += `---\n\n`;
+        
+        this.messages.forEach(msg => {
+            const roleName = msg.role === 'user' ? '👤 User' : '🤖 Assistant';
+            markdown += `### ${roleName}:\n${msg.content}\n\n`;
+            
+            if (msg.sources && msg.sources.length > 0) {
+                markdown += `**Retrieved Context Sources:**\n`;
+                msg.sources.forEach((src, idx) => {
+                    const docName = src.metadata.source || "Source";
+                    const pageStr = src.metadata.page ? `, Page ${src.metadata.page}` : "";
+                    const simPercent = Math.round(src.similarity * 100);
+                    markdown += `- [${idx + 1}] *${docName}${pageStr}* (Relevance: ${simPercent}%)\n`;
+                });
+                markdown += `\n`;
+            }
+            markdown += `---\n\n`;
+        });
+        
+        try {
+            const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            
+            // Generate clean, safe filename
+            const safeFilename = chatTitle.toLowerCase()
+                .replace(/[^a-z0-9]+/g, '_')
+                .replace(/^_+|_+$/g, '') || 'chat_history';
+                
+            downloadLink.href = url;
+            downloadLink.setAttribute('download', `${safeFilename}_export.md`);
+            downloadLink.style.visibility = 'hidden';
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Failed to export conversation session', err);
+            alert('Failed to export conversation.');
+        }
     }
 }

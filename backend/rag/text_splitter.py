@@ -7,7 +7,10 @@ from typing import List, Dict, Any
 def split_text(text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> List[str]:
     """Splits a single string into overlapping chunks.
     
-    Attempts to avoid breaking words or sentences by looking back for white spaces.
+    Upgrades text splitting to use semantic hierarchy:
+    1. First tries to split on paragraph boundaries (\n\n or \n).
+    2. Fall back to sentence boundaries (. , ? , ! ).
+    3. Fall back to standard space-based character windows if necessary.
     
     Args:
         text: The raw input text.
@@ -22,36 +25,84 @@ def split_text(text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> L
         return [stripped_text]
         
     chunks = []
-    start = 0
-    text_length = len(stripped_text)
+    raw_blocks = []
     
-    while start < text_length:
-        end = start + chunk_size
-        if end >= text_length:
-            chunks.append(stripped_text[start:])
-            break
+    # 1. Break text into semantically safe blocks (all guaranteed <= chunk_size)
+    paragraphs = stripped_text.split("\n\n")
+    for para in paragraphs:
+        if not para.strip():
+            continue
             
-        # Search for a natural break point (newline, tab, or space) in the last 15% of the chunk
-        lookback_limit = max(start, end - int(chunk_size * 0.15))
-        boundary = -1
-        
-        for i in range(end, lookback_limit, -1):
-            if stripped_text[i] in ("\n", " ", "\t"):
-                boundary = i
-                break
-                
-        if boundary != -1:
-            chunks.append(stripped_text[start:boundary].strip())
-            start = boundary + 1 - chunk_overlap
+        if len(para) <= chunk_size:
+            raw_blocks.append(para.strip())
         else:
-            chunks.append(stripped_text[start:end].strip())
-            start = end - chunk_overlap
+            # Paragraph is too large; split by single newlines
+            lines = para.split("\n")
+            for line in lines:
+                if not line.strip():
+                    continue
+                    
+                if len(line) <= chunk_size:
+                    raw_blocks.append(line.strip())
+                else:
+                    # Line is still too large; split by sentence boundaries using regex
+                    import re
+                    sentences = re.split(r'(?<=[.!?])\s+', line)
+                    for sent in sentences:
+                        if not sent.strip():
+                            continue
+                            
+                        if len(sent) <= chunk_size:
+                            raw_blocks.append(sent.strip())
+                        else:
+                            # Sentence is STILL too large; fall back to word-level splits
+                            words = sent.split(" ")
+                            current_word_chunk = []
+                            current_len = 0
+                            for word in words:
+                                if current_len + len(word) + 1 <= chunk_size:
+                                    current_word_chunk.append(word)
+                                    current_len += len(word) + 1
+                                else:
+                                    if current_word_chunk:
+                                        raw_blocks.append(" ".join(current_word_chunk))
+                                    current_word_chunk = [word]
+                                    current_len = len(word)
+                            if current_word_chunk:
+                                raw_blocks.append(" ".join(current_word_chunk))
+                                
+    # 2. Assemble these semantic blocks into final overlapping chunks of size <= chunk_size
+    current_chunk = []
+    current_length = 0
+    
+    for block in raw_blocks:
+        block_len = len(block)
+        
+        # If adding this block would exceed the maximum chunk size limit
+        if current_length + block_len + (2 if current_chunk else 0) > chunk_size:
+            if current_chunk:
+                chunks.append("\n\n".join(current_chunk))
+                
+            # Create standard sliding overlaps by looking back at the end of the previous chunk
+            overlap_blocks = []
+            overlap_len = 0
+            for prev_block in reversed(current_chunk):
+                if overlap_len + len(prev_block) + 2 <= chunk_overlap:
+                    overlap_blocks.insert(0, prev_block)
+                    overlap_len += len(prev_block) + 2
+                else:
+                    break
+                    
+            current_chunk = overlap_blocks + [block]
+            current_length = sum(len(b) for b in current_chunk) + 2 * (len(current_chunk) - 1)
+        else:
+            current_chunk.append(block)
+            current_length += block_len + (2 if len(current_chunk) > 1 else 0)
             
-        # Safeguard to prevent infinite loops (e.g. if overlap is set too high)
-        if start >= end:
-            start = end
-            
-    return [c for c in chunks if c]
+    if current_chunk:
+        chunks.append("\n\n".join(current_chunk))
+        
+    return [c for c in chunks if c.strip()]
 
 
 def split_documents(

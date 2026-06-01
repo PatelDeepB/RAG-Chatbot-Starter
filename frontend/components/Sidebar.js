@@ -213,26 +213,31 @@ export class Sidebar {
             this.uploadDropzone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 this.uploadDropzone.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file) this.handleFileUpload(file);
+                const files = Array.from(e.dataTransfer.files);
+                if (files.length > 0) this.handleFileUploads(files);
             });
         }
         
         if (this.fileInput) {
+            this.fileInput.setAttribute('multiple', 'true'); // Allow multiple select in browser picker
             this.fileInput.addEventListener('change', () => {
-                const file = this.fileInput.files[0];
-                if (file) this.handleFileUpload(file);
+                const files = Array.from(this.fileInput.files);
+                if (files.length > 0) this.handleFileUploads(files);
             });
         }
     }
 
-    async handleFileUpload(file) {
+    async handleFileUploads(files) {
+        if (!files || files.length === 0) return;
+        
         const formData = new FormData();
-        formData.append('file', file);
+        files.forEach(file => {
+            formData.append('files', file); // Matches backend 'files' argument list
+        });
 
         this.uploadProgressContainer.classList.remove('hidden');
         this.progressBarFill.style.width = '20%';
-        this.progressLabel.textContent = 'Uploading file...';
+        this.progressLabel.textContent = `Uploading ${files.length} file(s)...`;
 
         try {
             // Simulated upload increments to look highly professional

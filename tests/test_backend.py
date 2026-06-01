@@ -57,6 +57,18 @@ def test_split_documents_metadata():
     assert split_docs[1]["metadata"]["chunk_index"] == 1
 
 
+def test_split_text_semantic():
+    """Verifies that split_text splits semantically on paragraph double newlines.
+    """
+    text = "First paragraph here.\n\nSecond paragraph content is longer."
+    # A chunk size of 30 should keep them completely separate as two paragraph chunks
+    chunks = split_text(text, chunk_size=40, chunk_overlap=5)
+    
+    assert len(chunks) == 2
+    assert chunks[0] == "First paragraph here."
+    assert chunks[1] == "Second paragraph content is longer."
+
+
 # --- 2. Document Loader Tests ---
 
 def test_load_document_unsupported():
