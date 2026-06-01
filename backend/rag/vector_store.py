@@ -129,6 +129,7 @@ class SimpleVectorStore:
         Returns:
             List of matching document chunks with 'text', 'metadata', and 'similarity'.
         """
+        self.load()  # Ensure index is up to date with any background reindexing runs
         if not self.embeddings or not query:
             return []
             
