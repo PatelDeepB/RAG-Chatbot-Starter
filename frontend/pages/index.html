@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Knowledge Assistant</title>
+    
+    <!-- Design Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Code Highlight and Markdown parser libraries via CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Core Brand Theme Stylesheet -->
+    <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo" id="brand-logo-container">
+                    <div class="logo-placeholder" id="logo-graphic">AI</div>
+                    <img id="logo-img" src="/assets/logo.png" alt="Logo" class="hidden">
+                </div>
+                <div class="brand-info">
+                    <h2 class="brand-name" id="brand-name">AI Assistant</h2>
+                    <span class="brand-badge">RAG Active</span>
+                </div>
+                <button class="mobile-close-btn" id="mobile-sidebar-close" aria-label="Close sidebar">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-body">
+                <!-- Section: Chat Sessions -->
+                <div class="sidebar-section">
+                    <button class="btn btn-primary btn-new-chat" id="btn-new-chat">
+                        <i data-lucide="plus"></i>
+                        <span>New Chat</span>
+                    </button>
+                    
+                    <div class="history-list-header">
+                        <span>Recent Conversations</span>
+                    </div>
+                    <div class="chat-history-list" id="chat-history-list">
+                        <!-- Dynamically filled history -->
+                    </div>
+                </div>
+                
+                <!-- Section: Document Knowledge Base (Admin Protected) -->
+                <div class="sidebar-section kb-section">
+                    <div class="section-title">
+                        <span>Knowledge Base</span>
+                        <button class="btn-icon" id="admin-auth-trigger" title="Unlock Admin Actions">
+                            <i data-lucide="lock" id="admin-lock-icon"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Admin Locked Panel -->
+                    <div class="admin-locked-panel" id="admin-locked-panel">
+                        <p class="admin-hint-text">Unlock document uploads & index management.</p>
+                        <button class="btn btn-secondary btn-sm" id="btn-unlock-admin">
+                            <i data-lucide="unlock"></i>
+                            <span>Unlock Admin</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Admin Active Panel -->
+                    <div class="admin-active-panel hidden" id="admin-active-panel">
+                        <!-- Document Upload Area -->
+                        <div class="upload-dropzone" id="upload-dropzone">
+                            <i data-lucide="upload-cloud" class="upload-icon"></i>
+                            <p class="upload-text">Drag & drop or <span class="browse-link">browse</span></p>
+                            <span class="upload-subtext">PDF, TXT, MD (max 10MB)</span>
+                            <input type="file" id="file-input" accept=".pdf,.txt,.md,.markdown" class="hidden">
+                        </div>
+                        <div class="upload-progress-container hidden" id="upload-progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                            </div>
+                            <span class="progress-label" id="progress-label">Uploading...</span>
+                        </div>
+                        
+                        <!-- File Manager List -->
+                        <div class="kb-file-list" id="kb-file-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="btn-sidebar-option" id="theme-toggle">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                    <span id="theme-text">Light Mode</span>
+                </button>
+                <div class="footer-credit">
+                    <span>Powered by DeepMind Antigravity</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Console Layout -->
+        <main class="chat-console">
+            <!-- Console Header -->
+            <header class="console-header">
+                <div class="header-left">
+                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Open sidebar">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="model-badge">
+                        <i data-lucide="cpu" class="badge-icon"></i>
+                        <span id="model-name-label">GPT-4o Mini</span>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <!-- RAG toggle switch -->
+                    <div class="toggle-container">
+                        <span class="toggle-label">Search Docs</span>
+                        <label class="switch">
+                            <input type="checkbox" id="rag-toggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Chat Output Scroll Area -->
+            <div class="chat-output-area" id="chat-output-area">
+                <!-- Welcome greeting container -->
+                <div class="welcome-container" id="welcome-container">
+                    <div class="welcome-graphic">💬</div>
+                    <h1 class="welcome-title" id="welcome-title">My AI Assistant</h1>
+                    <p class="welcome-subtitle" id="welcome-subtitle">Ask me anything! Upload documentation in the sidebar to enrich my knowledge.</p>
+                    
+                    <div class="suggested-queries">
+                        <button class="suggested-card" data-query="What kind of document formats are supported?">
+                            <span class="query-text">What document formats are supported?</span>
+                            <i data-lucide="arrow-right" class="card-arrow"></i>
+                        </button>
+                        <button class="suggested-card" data-query="How does Retrieval-Augmented Generation (RAG) work?">
+                            <span class="query-text">How does RAG work?</span>
+                            <i data-lucide="arrow-right" class="card-arrow"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="message-stream-list" id="message-stream-list">
+                    <!-- Messages will render here dynamically -->
+                </div>
+            </div>
+            
+            <!-- Floating Chat Input Console -->
+            <footer class="chat-input-container">
+                <form class="chat-input-form" id="chat-input-form">
+                    <textarea 
+                        class="chat-input-textarea" 
+                        id="chat-input-textarea" 
+                        placeholder="Ask a question..." 
+                        rows="1"
+                        maxlength="4000"
+                        required
+                    ></textarea>
+                    <div class="chat-controls">
+                        <span class="character-counter" id="char-counter">0/4000</span>
+                        <button type="submit" class="btn-send" id="btn-send" disabled aria-label="Send message">
+                            <i data-lucide="send"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="input-disclaimer">
+                    <span>AI may generate inaccurate information. Validate critical resources.</span>
+                </div>
+            </footer>
+        </main>
+        
+        <!-- Auth Administration Overlay Dialog -->
+        <div class="modal-overlay hidden" id="auth-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Unlock Knowledge Base Admin</h3>
+                    <button class="btn-icon modal-close" id="auth-modal-close">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <form id="auth-form" class="modal-body">
+                    <p class="modal-desc">Enter the administrative password from your configuration to manage documents.</p>
+                    <div class="form-group">
+                        <label for="admin-password">Admin Password</label>
+                        <input type="password" id="admin-password" placeholder="••••••••" required autofocus>
+                        <span class="error-text hidden" id="auth-error-msg">Incorrect password. Please try again.</span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="btn-submit-auth">
+                        <i data-lucide="unlock"></i>
+                        <span>Unlock Console</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Citation Source Content View Drawer -->
+        <div class="modal-overlay hidden" id="citation-modal">
+            <div class="modal-card citation-card">
+                <div class="modal-header">
+                    <div>
+                        <h3 id="citation-title">Source Citation</h3>
+                        <span id="citation-relevance" class="relevance-badge">Relevance: 98%</span>
+                    </div>
+                    <button class="btn-icon modal-close" id="citation-modal-close">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="modal-body citation-body">
+                    <pre class="citation-source-text" id="citation-source-text"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ES6 Component Modules -->
+    <script type="module">
+        import { ThemeManager } from '/components/ThemeManager.js';
+        import { Sidebar } from '/components/Sidebar.js';
+        import { ChatInterface } from '/components/ChatInterface.js';
+        
+        // Initialize Core Front-End Architecture
+        document.addEventListener('DOMContentLoaded', async () => {
+            const configResponse = await fetch('/api/config');
+            const config = await configResponse.json();
+            
+            // 1. Initialize Theme manager
+            const themeManager = new ThemeManager(config);
+            themeManager.init();
+            
+            // 2. Initialize Sidebar management (auth, files, history)
+            const sidebar = new Sidebar(config);
+            sidebar.init();
+            
+            // 3. Initialize Interactive Chat Interface
+            const chatInterface = new ChatInterface(config, sidebar);
+            chatInterface.init();
+            
+            // Initialize Lucide Icons for dynamic tags
+            lucide.createIcons();
+            
+            // Expose components on window for debugging/submodules if necessary
+            window.app = { themeManager, sidebar, chatInterface };
+        });
+    </script>
+</body>
+</html>
