@@ -66,7 +66,7 @@ No complex setup. No vendor lock-in. Bring your own model and data.
 
 # 📸 Screenshots
 
-Coming soon.
+Coming soon...
 
 Feel free to contribute screenshots after deploying your own chatbot.
 
