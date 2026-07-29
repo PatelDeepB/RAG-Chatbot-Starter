@@ -513,6 +513,6 @@ Deep Patel
 
 AI Engineer | Python Developer | Generative AI Enthusiast
 
-If this project helped you, consider giving it a ⭐ on GitHub. Also Follow me on Github
+If this project helped you, consider giving it a ⭐ on GitHub. Also Follow me on Github.
 
 <img width="800" height="449" alt="ezgif-67fd456ce93ece28" src="https://github.com/user-attachments/assets/b74039a7-0777-45a9-ba19-16522f7d5a21" />
